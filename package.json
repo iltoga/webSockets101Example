@@ -1,0 +1,11 @@
+{
+    "name": "websocket101example-app",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+      "start:client": "cd client && npm start",
+      "start:server": "cd server && go run main.go",
+      "start": "npm-run-all --parallel start:client start:server"    
+    }
+  }
+  
