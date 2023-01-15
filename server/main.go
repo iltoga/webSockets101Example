@@ -2,35 +2,54 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{}
-
-func main() {
-	http.HandleFunc("/ws", handleConnections)
-	http.ListenAndServe(":8000", nil)
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
 
-func handleConnections(w http.ResponseWriter, r *http.Request) {
-	// Upgrade initial GET request to a websocket
+func main() {
+	http.HandleFunc("/ws", wsEndpoint)
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func wsEndpoint(w http.ResponseWriter, r *http.Request) {
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	// upgrade this connection to a WebSocket
+	// connection
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
-	// Make sure we close the connection when the function returns
-	defer ws.Close()
 
+	log.Println("Client Connected")
+	err = ws.WriteMessage(1, []byte("Hello client you've connected!"))
+	if err != nil {
+		log.Println(err)
+	}
+	reader(ws)
+}
+
+func reader(conn *websocket.Conn) {
 	for {
-		// Read in a new message as a JSON object and map it to a Message object
-		_, msg, err := ws.ReadMessage()
+		// read in a message
+		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println(err)
-			break
+			log.Println(err)
+			return
 		}
-		// Send the newly received message to the broadcast channel
-		fmt.Printf("Received message: %s\n", msg)
+
+		// print out incoming message
+		fmt.Println("incoming message: " + string(p))
+
+		if err := conn.WriteMessage(messageType, p); err != nil {
+			log.Println(err)
+			return
+		}
 	}
 }
