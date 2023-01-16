@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -44,10 +45,11 @@ func reader(conn *websocket.Conn) {
 			return
 		}
 
-		// print out incoming message
+		// log the incoming message
 		fmt.Println("incoming message: " + string(p))
 
-		if err := conn.WriteMessage(messageType, p); err != nil {
+		// respond to the client with the message in uppercase
+		if err := conn.WriteMessage(messageType, []byte(strings.ToUpper(string(p)))); err != nil {
 			log.Println(err)
 			return
 		}
